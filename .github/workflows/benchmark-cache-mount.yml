@@ -1,0 +1,29 @@
+name: Benchmark BuildKit cache mounts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Warm the npm cache mount (first build, cold)
+        run: |
+          time docker buildx build --no-cache -f Dockerfile.cache-mount -t cache-mount:1 --load .
+
+      - name: Rebuild with --no-cache (mount cache should still be warm)
+        run: |
+          time docker buildx build --no-cache -f Dockerfile.cache-mount -t cache-mount:2 --load .
+
+      - name: Baseline build, no cache mount at all (first build, cold)
+        run: |
+          time docker buildx build --no-cache -f Dockerfile.no-cache-mount -t no-cache-mount:1 --load .
+
+      - name: Rebuild with --no-cache (no mount cache to help this time)
+        run: |
+          time docker buildx build --no-cache -f Dockerfile.no-cache-mount -t no-cache-mount:2 --load .
