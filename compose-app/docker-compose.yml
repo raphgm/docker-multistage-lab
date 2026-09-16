@@ -1,0 +1,31 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: appuser
+      DB_PASSWORD: ${DB_PASSWORD:-devpassword}
+      DB_NAME: compose_lab
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-devpassword}
+      POSTGRES_DB: compose_lab
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d compose_lab"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-data:
